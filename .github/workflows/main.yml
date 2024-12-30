@@ -1,0 +1,39 @@
+name: CI/CD Workflow
+
+on:
+  push:
+    branches:
+      - main  # Run on push to the main branch
+  pull_request:
+    branches:
+      - main  # Run on pull requests to the main branch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '16'  # Specify Node version
+    
+    - name: Install dependencies
+      run: npm install  # Install dependencies
+
+    - name: Build React app
+      run: npm run build  # Build the React app
+
+    - name: Run tests
+      run: npm test  # Run your tests (if any)
+
+    - name: Deploy to server
+      run: |
+        # Deploy to your EC2 instance (you can use SCP or SSH to deploy)
+        scp -i your-key.pem -r ./dist/* ec2-user@your-ec2-ip:/path/to/your/server
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
