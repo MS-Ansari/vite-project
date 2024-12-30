@@ -1,17 +1,14 @@
-name: CI/CD Workflow
+name: Deploy to EC2
 
 on:
   push:
     branches:
-      - main  # Run on push to the main branch
-  pull_request:
-    branches:
-      - main  # Run on pull requests to the main branch
+      - main  # Trigger the workflow on push to main branch
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
@@ -19,21 +16,22 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v2
       with:
-        node-version: '16'  # Specify Node version
-    
+        node-version: '16'  # Use the Node.js version for your project
+
     - name: Install dependencies
-      run: npm install  # Install dependencies
+      run: npm install
 
-    - name: Build React app
-      run: npm run build  # Build the React app
+    - name: Build the app
+      run: npm run build  # Replace with your build command (e.g., `npm run build`)
 
-    - name: Run tests
-      run: npm test  # Run your tests (if any)
-
-    - name: Deploy to server
-      run: |
-        # Deploy to your EC2 instance (you can use SCP or SSH to deploy)
-        scp -i your-key.pem -r ./dist/* ec2-user@your-ec2-ip:/path/to/your/server
+    - name: Deploy to EC2
       env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        EC2_PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}  # Your EC2 private key from Secrets
+        EC2_HOST: ${{ secrets.EC2_HOST }}  # Your EC2 public IP address
+      run: |
+        # SSH into your EC2 instance and deploy the app
+        chmod 600 $EC2_PRIVATE_KEY  # Ensure private key permissions are set
+        scp -i $EC2_PRIVATE_KEY -r ./dist ec2-user@$EC2_HOST:/home/ec2-user/your-app-folder  # Upload build files
+        ssh -i $EC2_PRIVATE_KEY ec2-user@$EC2_HOST "cd /home/ec2-user/your-app-folder && pm2 restart all"  # Restart server
+
+
